@@ -32,6 +32,29 @@ def db_setup():
 
 db_setup()
 
+@bot.command()
+async def kaydet(ctx, sayi: int):
+    # Veritabanına bağlanıyoruz
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+    
+    # Bugünün tarihini gün/ay/yıl formatında alıyoruz
+    bugun = date.today().strftime("%d/%m/%Y")
+    
+    # SQL ile veriyi tabloya yerleştiriyoruz
+    cursor.execute("INSERT INTO pullups (user_id, count, date) VALUES (?, ?, ?)", 
+                   (str(ctx.author.id), sayi, bugun))
+    
+    conn.commit()
+    conn.close()
+    
+    hedef = 20 # Senin o meşhur 20 barfiks hedefin
+    if sayi >= hedef:
+        await ctx.send(f"ŞAKA MI? {sayi} barfiks! 20 hedefini vurdun, Kaguya seninle gurur duyuyor! 🏆")
+    else:
+        kalan = hedef - sayi
+        await ctx.send(f"Kaydedildi! {sayi} barfiks cebinde. Hedef 20, kaldı {kalan}. Zorla o demiri! 💪")
+
 @bot.event
 async def on_ready():
     # Bot çevrimiçi olduğunda terminalde bu mesajı göreceksin

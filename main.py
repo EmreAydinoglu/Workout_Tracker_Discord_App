@@ -55,6 +55,35 @@ async def kaydet(ctx, sayi: int):
         kalan = hedef - sayi
         await ctx.send(f"Kaydedildi! {sayi} barfiks cebinde. Hedef 20, kaldı {kalan}. Zorla o demiri! 💪")
 
+@bot.command()
+async def gecmis(ctx):
+    # Veritabanına bağlan
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+    
+    # SQL Sorgusu: Sadece bu kullanıcının verilerini al, son eklenenden geriye doğru 5 tanesini getir
+    cursor.execute('''
+        SELECT date, count FROM pullups 
+        WHERE user_id = ? 
+        ORDER BY id DESC LIMIT 5
+    ''', (str(ctx.author.id),))
+    
+    # Bulunan tüm sonuçları bir listeye çek
+    kayitlar = cursor.fetchall()
+    conn.close()
+    
+    # Eğer listede hiç kayıt yoksa
+    if not kayitlar:
+        await ctx.send("Henüz bir kayıt bulamadım. Hemen demire asıl ve `!kaydet` ile ilk verini gir!")
+        return
+        
+    # Kayıtlar varsa şık bir mesaj oluştur
+    mesaj = f"📊 **İşte Son Antrenmanların:**\n\n"
+    for tarih, miktar in kayitlar:
+        mesaj += f"📅 {tarih} ➡️ **{miktar} Barfiks**\n"
+        
+    await ctx.send(mesaj)
+
 @bot.event
 async def on_ready():
     # Bot çevrimiçi olduğunda terminalde bu mesajı göreceksin

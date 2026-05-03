@@ -2,6 +2,8 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import sqlite3
+from datetime import date
 
 # .env dosyasındaki DISCORD_TOKEN değişkenini sisteme yükler
 load_dotenv()
@@ -13,6 +15,22 @@ intents.message_content = True
 
 # Botun komut ön ekini ve izinlerini tanımlıyoruz
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+def db_setup():
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS pullups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
+            count INTEGER,
+            date TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+db_setup()
 
 @bot.event
 async def on_ready():

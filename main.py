@@ -3,10 +3,13 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import sqlite3
-from datetime import datetime, timedelta, date 
+from datetime import datetime, timedelta, date , time
+from discord.ext import tasks
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+raw_id = os.getenv('CHANNEL_ID')
+KANAL_ID = int(raw_id) if raw_id else None
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -95,6 +98,24 @@ async def on_command_error(ctx, error):
 async def on_ready():
     print(f'Sistem aktif! {bot.user.name} olarak giriş yapıldı.')
     print('Barfiks demiri ve 20 pull-up hedefi bizi bekliyor!')
+    if not hatirlatici.is_running():
+        hatirlatici.start()
+    print('Hatırlatıcı döngüsü başlatıldı!')
+
+@tasks.loop(time=time(hour=18, minute=00))
+async def hatirlatici():
+    kanal = bot.get_channel(KANAL_ID)
+    embed = discord.Embed(
+    title="🔔 Günlük Disiplin Hatırlatıcısı",
+    description="Hey **Emre**, barfiks demiri seni bekliyor! Bugün omuzlarındaki yükü hissetmeye hazır mısın?",
+    color=0xff0000 # Kaguya Kırmızısı
+    )
+    if kanal:
+        await kanal.send(embed=embed)
+    else:
+        print("Bir sorun ile karşılaşıldı")
+
+
 
 @bot.command()
 async def haftalik(ctx):

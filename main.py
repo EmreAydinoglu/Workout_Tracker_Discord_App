@@ -34,26 +34,34 @@ db_setup()
 
 @bot.command()
 async def kaydet(ctx, sayi: int):
-    # Veritabanına bağlanıyoruz
+    # Veritabanı işlemleri (Aynı kalıyor)
     conn = sqlite3.connect('fitness_data.db')
     cursor = conn.cursor()
-    
-    # Bugünün tarihini gün/ay/yıl formatında alıyoruz
     bugun = date.today().strftime("%d/%m/%Y")
-    
-    # SQL ile veriyi tabloya yerleştiriyoruz
     cursor.execute("INSERT INTO pullups (user_id, count, date) VALUES (?, ?, ?)", 
                    (str(ctx.author.id), sayi, bugun))
-    
     conn.commit()
     conn.close()
+
+    # Profesyonel Embed Tasarımı
+    embed = discord.Embed(
+        title="💪 Antrenman Başarıyla Kaydedildi!",
+        description=f"Harika bir set çıkardın, **{ctx.author.name}**!",
+        color=0xff0000 # Kaguya Kırmızısı
+    )
     
-    hedef = 20 # Senin o meşhur 20 barfiks hedefin
+    embed.add_field(name="Çekilen Barfiks", value=f"**{sayi}**", inline=True)
+    
+    hedef = 20 # Senin o meşhur hedefin
     if sayi >= hedef:
-        await ctx.send(f"ŞAKA MI? {sayi} barfiks! 20 hedefini vurdun, Kaguya seninle gurur duyuyor! 🏆")
+        embed.add_field(name="Durum", value="🏆 **HEDEF TAMAMLANDI!**", inline=False)
+        embed.set_footer(text="Mükemmel disiplin! Kaguya seninle gurur duyuyor.")
     else:
         kalan = hedef - sayi
-        await ctx.send(f"Kaydedildi! {sayi} barfiks cebinde. Hedef 20, kaldı {kalan}. Zorla o demiri! 💪")
+        embed.add_field(name="Hedefe Kalan", value=f"**{kalan}** barfiks daha!", inline=True)
+        embed.set_footer(text="Gelişmeye devam et, pes etmek yok!")
+
+    await ctx.send(embed=embed)
 
 @bot.command()
 async def gecmis(ctx):
@@ -95,16 +103,13 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    # Bot çevrimiçi olduğunda terminalde bu mesajı göreceksin
     print(f'Sistem aktif! {bot.user.name} olarak giriş yapıldı.')
     print('Barfiks demiri ve 20 pull-up hedefi bizi bekliyor!')
 
 @bot.command()
 async def selam(ctx):
-    # !selam komutu verildiğinde botun vereceği cevap
     await ctx.send(f'Selam {ctx.author.name}! Bugün barfikste kaçtayız?')
 
-# Botu çalıştıran ana fonksiyon
 if TOKEN:
     bot.run(TOKEN)
 else:

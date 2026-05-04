@@ -64,7 +64,7 @@ async def gecmis(ctx):
     # SQL Sorgusu: Sadece bu kullanıcının verilerini al, son eklenenden geriye doğru 5 tanesini getir
     cursor.execute('''
         SELECT date, count FROM pullups 
-        WHERE user_id = ? 
+        WHERE user_id = ? git
         ORDER BY id DESC LIMIT 5
     ''', (str(ctx.author.id),))
     
@@ -83,6 +83,15 @@ async def gecmis(ctx):
         mesaj += f"📅 {tarih} ➡️ **{miktar} Barfiks**\n"
         
     await ctx.send(mesaj)
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        await ctx.send("❌ **Hata:** Dostum, barfiks sayısını sayı olarak girmelisin! Örn: `!kaydet 10`")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("❓ **Eksik Bilgi:** Kaç barfiks çektin? Sayı girmeyi unuttun sanırım. Örn: `!kaydet 5`")
+    else:
+        print(f"Sistemde bir hata oluştu: {error}")
 
 @bot.event
 async def on_ready():

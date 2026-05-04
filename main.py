@@ -3,17 +3,14 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import sqlite3
-from datetime import date
+from datetime import datetime, timedelta, date 
 
-# .env dosyasındaki DISCORD_TOKEN değişkenini sisteme yükler
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-# Botun mesajları okuyabilmesi için gerekli izinler (Intents)
 intents = discord.Intents.default()
 intents.message_content = True
 
-# Botun komut ön ekini ve izinlerini tanımlıyoruz
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 def db_setup():
@@ -34,7 +31,6 @@ db_setup()
 
 @bot.command()
 async def kaydet(ctx, sayi: int):
-    # Veritabanı işlemleri (Aynı kalıyor)
     conn = sqlite3.connect('fitness_data.db')
     cursor = conn.cursor()
     bugun = date.today().strftime("%d/%m/%Y")
@@ -43,16 +39,15 @@ async def kaydet(ctx, sayi: int):
     conn.commit()
     conn.close()
 
-    # Profesyonel Embed Tasarımı
     embed = discord.Embed(
         title="💪 Antrenman Başarıyla Kaydedildi!",
         description=f"Harika bir set çıkardın, **{ctx.author.name}**!",
-        color=0xff0000 # Kaguya Kırmızısı
+        color=0xff0000 
     )
     
     embed.add_field(name="Çekilen Barfiks", value=f"**{sayi}**", inline=True)
     
-    hedef = 20 # Senin o meşhur hedefin
+    hedef = 20 
     if sayi >= hedef:
         embed.add_field(name="Durum", value="🏆 **HEDEF TAMAMLANDI!**", inline=False)
         embed.set_footer(text="Mükemmel disiplin! Kaguya seninle gurur duyuyor.")
@@ -65,27 +60,22 @@ async def kaydet(ctx, sayi: int):
 
 @bot.command()
 async def gecmis(ctx):
-    # Veritabanına bağlan
     conn = sqlite3.connect('fitness_data.db')
     cursor = conn.cursor()
     
-    # SQL Sorgusu: Sadece bu kullanıcının verilerini al, son eklenenden geriye doğru 5 tanesini getir
     cursor.execute('''
         SELECT date, count FROM pullups 
-        WHERE user_id = ? git
+        WHERE user_id = ? 
         ORDER BY id DESC LIMIT 5
     ''', (str(ctx.author.id),))
     
-    # Bulunan tüm sonuçları bir listeye çek
     kayitlar = cursor.fetchall()
     conn.close()
     
-    # Eğer listede hiç kayıt yoksa
     if not kayitlar:
         await ctx.send("Henüz bir kayıt bulamadım. Hemen demire asıl ve `!kaydet` ile ilk verini gir!")
         return
         
-    # Kayıtlar varsa şık bir mesaj oluştur
     mesaj = f"📊 **İşte Son Antrenmanların:**\n\n"
     for tarih, miktar in kayitlar:
         mesaj += f"📅 {tarih} ➡️ **{miktar} Barfiks**\n"
@@ -107,8 +97,36 @@ async def on_ready():
     print('Barfiks demiri ve 20 pull-up hedefi bizi bekliyor!')
 
 @bot.command()
-async def selam(ctx):
-    await ctx.send(f'Selam {ctx.author.name}! Bugün barfikste kaçtayız?')
+async def haftalik(ctx):
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT date, count FROM pullups WHERE user_id = ?", (str(ctx.author.id),))
+    kayitlar = cursor.fetchall()
+    conn.close()
+    
+    toplam = 0
+    bugun = datetime.now()
+    
+    for tarih_str, miktar in kayitlar:
+        try:
+            kayit_tarihi = datetime.strptime(tarih_str, "%d/%m/%Y")
+            if (bugun - kayit_tarihi).days <= 7:
+                toplam += miktar
+        except ValueError:
+            continue 
+            
+    embed = discord.Embed(
+        title="📈 Haftalık Performans Raporu",
+        description=f"Son 7 günde toplam **{toplam}** barfiks çektin!",
+        color=0x3498db 
+    )
+    
+    if toplam > 0:
+        embed.set_footer(text="İyi gidiyorsun, demire asılmaya devam!")
+    else:
+        embed.set_footer(text="Bu hafta henüz kayıt girmemişsin!")
+        
+    await ctx.send(embed=embed)
 
 if TOKEN:
     bot.run(TOKEN)

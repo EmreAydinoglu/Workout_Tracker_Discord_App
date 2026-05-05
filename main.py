@@ -115,7 +115,39 @@ async def hatirlatici():
     else:
         print("Bir sorun ile karşılaşıldı")
 
+bot.remove_command('help')
+@bot.command()
+async def help(ctx):
+    embed = discord.Embed(
+        title="📜 ByEmre's Fitness Toy | Komut Rehberi",
+        description="Barfiks hedefine giden yolda asistanın burada! İşte kullanabileceğin komutlar:",
+        color=0xff0000
+    )
 
+    embed.add_field(
+        name="🏋️ Antrenman Komutları", 
+        value="`!kaydet [sayı]` - Günlük barfiks setini kaydeder.\n"
+              "`!gecmis` - Son 5 antrenmanını listeler.", 
+        inline=False
+    )
+
+    embed.add_field(
+        name="📊 Analiz ve İstatistik", 
+        value="`!haftalik` - Son 7 gündeki toplam performansın.\n"
+              "`!seri` - Kaç gündür aralıksız çalıştığını gösterir (🔥 Çok yakında!).", 
+        inline=False
+    )
+
+    embed.add_field(
+        name="⚙️ Genel", 
+        value="`!help` - Bu menüyü açar.\n",
+        inline=False
+    )
+
+    embed.set_footer(text="Haliç Üniversitesi Mühendislik Disipliniyle Geliştirildi. 💪")
+    embed.set_thumbnail(url=bot.user.avatar.url)
+
+    await ctx.send(embed=embed)   
 
 @bot.command()
 async def haftalik(ctx):

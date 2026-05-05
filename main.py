@@ -150,6 +150,55 @@ async def help(ctx):
     await ctx.send(embed=embed)   
 
 @bot.command()
+async def seri(ctx):
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT DISTINCT date
+        FROM pullups
+        WHERE user_id = ? 
+    ''', (str(ctx.author.id),))
+    
+    kayitlar = cursor.fetchall()
+    conn.close()
+
+    if not kayitlar:
+        await ctx.send("Henüz bir kayıt bulamadım. Seri başlatmak için ilk barfiksini kaydet!")
+        return
+
+    tarih_listesi = [datetime.strptime(row[0], "%d/%m/%Y").date() for row in kayitlar]
+    tarih_listesi.sort(reverse=True)
+
+    bugun = date.today()
+    seri_sayaci = 0
+    
+    if tarih_listesi[0] == bugun or tarih_listesi[0] == bugun - timedelta(days=1):
+        beklenen_tarih = tarih_listesi[0]
+        
+        for tarih in tarih_listesi:
+            if tarih == beklenen_tarih:
+                seri_sayaci += 1
+                beklenen_tarih -= timedelta(days=1)
+            else:
+                break
+    
+    embed = discord.Embed(
+        title="🔥 Disiplin Serisi",
+        color=0xff0000
+    )
+    
+    if seri_sayaci >= 5:
+        embed.description = f"**Muazzam bir irade, Emre!** Tam **{seri_sayaci}** gündür zinciri kırmadın. 20 barfiks hedefine çok yaklaştın!"
+    elif seri_sayaci > 0:
+        embed.description = f"Harika gidiyorsun! **{seri_sayaci}** günlük bir serin var. İstikrar, başarının anahtarıdır."
+    else:
+        embed.description = "Seri şu an bozulmuş görünüyor. Ama unutma; mühendislikte her hata yeni bir iterasyon fırsatıdır. Bugün yeniden başla! 💪"
+
+    embed.set_footer(text="Haliç Üniversitesi Mühendislik Disiplini 🎓")
+    await ctx.send(embed=embed)
+
+@bot.command()
 async def haftalik(ctx):
     conn = sqlite3.connect('fitness_data.db')
     cursor = conn.cursor()

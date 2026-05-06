@@ -134,7 +134,7 @@ async def help(ctx):
     embed.add_field(
         name="📊 Analiz ve İstatistik", 
         value="`!haftalik` - Son 7 gündeki toplam performansın.\n"
-              "`!seri` - Kaç gündür aralıksız çalıştığını gösterir (🔥 Çok yakında!).", 
+              "`!seri` - Kaç gündür aralıksız çalıştığını gösterir.", 
         inline=False
     )
 
@@ -229,6 +229,19 @@ async def haftalik(ctx):
         embed.set_footer(text="Bu hafta henüz kayıt girmemişsin!")
         
     await ctx.send(embed=embed)
+
+@bot.command()
+async def rekor(ctx):
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT MAX(count) FROM pullups WHERE user_id = ?", (str(ctx.author.id),))
+    sonuc = cursor.fetchone()
+    conn.close()
+
+    if sonuc and sonuc[0] is not None:
+        await ctx.send(f"🏆 Kişisel rekorun: **{sonuc[0]}** barfiks!")
+    else:
+        await ctx.send("Henüz bir kaydın yok.")
 
 if TOKEN:
     bot.run(TOKEN)

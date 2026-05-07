@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import sqlite3
 from datetime import datetime, timedelta, date , time
 from discord.ext import tasks
+import matplotlib.pyplot as plt
+import io
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -134,7 +136,8 @@ async def help(ctx):
     embed.add_field(
         name="📊 Analiz ve İstatistik", 
         value="`!haftalik` - Son 7 gündeki toplam performansın.\n"
-              "`!seri` - Kaç gündür aralıksız çalıştığını gösterir.", 
+              "`!seri` - Kaç gündür aralıksız çalıştığını gösterir.\n"
+              "`!rekor` - Rekor barfiks sayını gösterir.", 
         inline=False
     )
 
@@ -242,6 +245,47 @@ async def rekor(ctx):
         await ctx.send(f"🏆 Kişisel rekorun: **{sonuc[0]}** barfiks!")
     else:
         await ctx.send("Henüz bir kaydın yok.")
+
+@bot.command()
+async def grafik(ctx):
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT date, count FROM pullups 
+        WHERE user_id = ? 
+        ORDER BY id DESC LIMIT 7
+    ''', (str(ctx.author.id),))
+    
+    kayitlar = cursor.fetchall()
+    conn.close()
+
+    if not kayitlar:
+        await ctx.send("Grafik oluşturmak için henüz yeterli verin yok!")
+        return
+
+    gunler = [row[0] for row in reversed(kayitlar)]
+    sayilar = [row[1] for row in reversed(kayitlar)]
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(gunler, sayilar, color='red', marker='o', linestyle='-', linewidth=2, markersize=8)
+    
+    plt.title(f'Barfiks Gelişim Grafiği - {ctx.author.name}', fontsize=14, fontweight='bold')
+    plt.xlabel('Tarih', fontsize=12)
+    plt.ylabel('Barfiks Sayısı', fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.ylim(0, max(sayilar) + 5) # Y ekseni 0'dan başlasın, en yüksek değerden biraz yukarı çıksın
+
+    with io.BytesIO() as resim_dosyasi:
+        plt.savefig(resim_dosyasi, format='png', bbox_inches='tight')
+        resim_dosyasi.seek(0)
+        
+        await ctx.send(
+            content=f"📈 **{ctx.author.name}**, işte son {len(kayitlar)} antrenmanındaki performansın:",
+            file=discord.File(fp=resim_dosyasi, filename='gelisim_grafigi.png')
+        )
+    
+    plt.close()
 
 if TOKEN:
     bot.run(TOKEN)

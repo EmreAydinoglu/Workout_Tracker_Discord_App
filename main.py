@@ -64,12 +64,47 @@ async def kaydet(ctx, sayi: int):
     await ctx.send(embed=embed)
 
 @bot.command()
+async def sil(ctx, kayit_id: int):
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM pullups WHERE id = ? AND user_id = ?", (kayit_id, str(ctx.author.id)))
+    kayit = cursor.fetchone()
+
+    if kayit:
+        cursor.execute("DELETE FROM pullups WHERE id = ?", (kayit_id,))
+        conn.commit()
+        await ctx.send(f"✅ `{kayit_id}` ID'li antrenman kaydı başarıyla imha edildi.")
+    else:
+        await ctx.send("❌ Hata: Kayıt bulunamadı veya bu kaydı silme yetkin yok!")
+
+    conn.close()  
+
+@bot.command()
+async def sonusil(ctx):
+    conn = sqlite3.connect('fitness_data.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM pullups WHERE user_id = ? ORDER BY id DESC LIMIT 1", (str(ctx.author.id),))
+    son_kayit = cursor.fetchone()
+
+    if son_kayit:
+        cursor.execute("DELETE FROM pullups WHERE id = ?", (son_kayit[0],))
+        conn.commit()
+        await ctx.send(f"✅ En son girdiğin antrenman kaydı (ID: `{son_kayit[0]}`) başarıyla silindi.")
+    else:
+        await ctx.send("Silinecek bir kayıt bulunamadı.")
+
+    conn.close()
+
+@bot.command()
 async def gecmis(ctx):
     conn = sqlite3.connect('fitness_data.db')
     cursor = conn.cursor()
     
+    # 1. DEĞİŞİKLİK: Sorguya 'id' sütununu ekledik
     cursor.execute('''
-        SELECT date, count FROM pullups 
+        SELECT id, date, count FROM pullups 
         WHERE user_id = ? 
         ORDER BY id DESC LIMIT 5
     ''', (str(ctx.author.id),))
@@ -82,8 +117,9 @@ async def gecmis(ctx):
         return
         
     mesaj = f"📊 **İşte Son Antrenmanların:**\n\n"
-    for tarih, miktar in kayitlar:
-        mesaj += f"📅 {tarih} ➡️ **{miktar} Barfiks**\n"
+    
+    for kayit_id, tarih, miktar in kayitlar:
+        mesaj += f"🆔 `{kayit_id}` | 📅 {tarih} ➡️ **{miktar} Barfiks**\n"
         
     await ctx.send(mesaj)
 

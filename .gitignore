@@ -1,4 +1,17 @@
-.env
-venv/
-__pycache__/
+# Veritabanı
 fitness_data.db
+
+# Gizli Bilgiler
+.env
+
+# Python Önbellek Dosyaları
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Sanal Ortamlar
+venv/
+.venv/
+
+# Otomatik Oluşturulan Grafikler
+gelisim_grafigi.png
